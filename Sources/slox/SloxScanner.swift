@@ -85,7 +85,7 @@ struct SloxScanner {
         addToken(type, literal: nil)
     }
 
-    mutating private func addToken(_ type: TokenType, literal: Literal?) {
+    mutating private func addToken(_ type: TokenType, literal: Object?) {
         guard let text = source[safe: start..<current] else {
             assertionFailure("Scanner state violation: invalid range \(start)..<\(current)")
             return

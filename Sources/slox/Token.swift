@@ -1,7 +1,7 @@
 struct Token {
     let type: TokenType
     let lexeme: String
-    let literal: Literal?
+    let literal: Object?
     let line: Int
 }
 

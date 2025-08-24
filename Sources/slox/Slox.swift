@@ -1,6 +1,5 @@
 import Foundation
 
-@MainActor
 @main
 struct Slox {
     static func main() throws {
