@@ -2,22 +2,22 @@ expressions:
   Binary:
     fields:
       - name: left
-        type: Expr
-      - name: operator
+        type: Expression
+      - name: _operator
         type: Token
       - name: right
-        type: Expr
+        type: Expression
   Grouping:
     fields:
       - name: expression
-        type: Expr
+        type: Expression
   Literal:
     fields:
       - name: value
-        type: Literal
+        type: Object
   Unary:
     fields:
-      - name: operator
+      - name: _operator
         type: Token
       - name: right
-        type: Expr
+        type: Expression
