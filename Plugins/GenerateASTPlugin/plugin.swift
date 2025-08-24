@@ -14,7 +14,7 @@ struct GenerateASTPlugin: BuildToolPlugin {
                 executable: try context.tool(named: "ASTGenerator").url,
                 arguments: [
                     inputFile.path,
-                    outputDir.path,
+                    outputFile.path,
                 ],
                 inputFiles: [inputFile],
                 outputFiles: [outputFile]
