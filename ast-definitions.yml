@@ -1,0 +1,23 @@
+expressions:
+  Binary:
+    fields:
+      - name: left
+        type: Expr
+      - name: operator
+        type: Token
+      - name: right
+        type: Expr
+  Grouping:
+    fields:
+      - name: expression
+        type: Expr
+  Literal:
+    fields:
+      - name: value
+        type: Literal
+  Unary:
+    fields:
+      - name: operator
+        type: Token
+      - name: right
+        type: Expr
