@@ -38,6 +38,8 @@ private func generateAST(from yaml: Any, outputPath: String) throws(ASTGenerator
 
     var ast: String = ""
     appendGenerationComment(ast: &ast, path: inputFilePath)
+    appendExpressionProtocol(ast: &ast)
+    appendVisitorProtocol(ast: &ast, expresssions: expressions.map { $0.key })
 
     for (expr, data) in expressions {
         try buildExpressionStruct(expr: expr, data: data, ast: &ast)
@@ -62,11 +64,15 @@ private func buildExpressionStruct(
         throw .invalidYamlStructure("Unable to convert YAML data to dict")
     }
 
-    try parseFields(fields: fields, ast: &ast)
+    try handleStructFields(fields: fields, ast: &ast)
+
+    appendStructAcceptMethod(ast: &ast)
     appendStructClosingBrace(ast: &ast)
 }
 
-private func parseFields(fields: [[String: Any]], ast: inout String) throws(ASTGeneratorError) {
+private func handleStructFields(fields: [[String: Any]], ast: inout String)
+    throws(ASTGeneratorError)
+{
     for field in fields {
         guard let name = field["name"] as? String else {
             throw .invalidFieldProperties("Missing name property")
@@ -93,8 +99,25 @@ private func appendGenerationComment(ast: inout String, path: String) {
     ast += "/*\n * Generated AST from \(path)\n */\n\n"
 }
 
+private func appendExpressionProtocol(ast: inout String) {
+    ast += "protocol Expression {\n\tfunc accept<T>(_ visitor: any Visitor<T>) -> T\n}\n\n"
+}
+
+private func appendVisitorProtocol(ast: inout String, expresssions: [String]) {
+    ast += "protocol Visitor<ReturnType> {\n"
+    ast += "\tassociatedtype ReturnType\n"
+    for expr in expresssions {
+        ast += "\tfunc visit(_ \(expr.lowercased()): \(expr)) -> ReturnType\n"
+    }
+    ast += "}\n\n"
+}
+
 private func appendStructSignature(ast: inout String, expr: String) {
     ast += "struct \(expr): Expression {\n"
+}
+
+private func appendStructAcceptMethod(ast: inout String) {
+    ast += "\n\tfunc accept<T>(_ visitor: any Visitor<T>) -> T {\n\t\tvisitor.visit(self)\n\t}\n"
 }
 
 private func appendField(ast: inout String, name: String, type: String) {
