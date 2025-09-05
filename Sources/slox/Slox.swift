@@ -46,10 +46,10 @@ struct Slox {
         var scanner = SloxScanner(source: source)
         do {
             let tokens = try scanner.scanTokens()
-            for token in tokens {
-                print(token)
-            }
-        } catch {
+            var parser = Parser(tokens: tokens)
+            let expression = try parser.parse()
+            print(ASTPrinter().print(expr: expression))
+        } catch let error as ReportableError {
             report(line: error.line, _where: "", message: error.message)
             throw error
         }
