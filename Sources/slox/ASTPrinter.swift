@@ -6,7 +6,7 @@ struct ASTPrinter: Visitor {
     }
 
     func visit(_ literal: Literal) -> ReturnType {
-        return literal.value.description
+        return literal.value.toString
     }
 
     func visit(_ unary: Unary) -> ReturnType {
