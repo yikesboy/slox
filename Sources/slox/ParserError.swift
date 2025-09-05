@@ -1,4 +1,4 @@
-enum ParserError: Error {
+enum ParserError: ReportableError {
     case unexpected(Token)
     case expected(Token)
 

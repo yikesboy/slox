@@ -1,4 +1,4 @@
-enum ScannerError: Error {
+enum ScannerError: ReportableError {
     case unexpectedCharacter(_ character: Character, _ line: Int)
     case unterminatedString(_ line: Int)
 
