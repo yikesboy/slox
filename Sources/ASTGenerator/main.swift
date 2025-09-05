@@ -100,14 +100,16 @@ private func appendGenerationComment(ast: inout String, path: String) {
 }
 
 private func appendExpressionProtocol(ast: inout String) {
-    ast += "protocol Expression {\n\tfunc accept<T>(_ visitor: any Visitor<T>) -> T\n}\n\n"
+    ast +=
+        "protocol Expression {\n\tfunc accept<T, E: Error>(_ visitor: any Visitor<T, E>) throws(E) -> T\n}\n\n"
 }
 
 private func appendVisitorProtocol(ast: inout String, expresssions: [String]) {
-    ast += "protocol Visitor<ReturnType> {\n"
+    ast += "protocol Visitor<ReturnType, ErrorType> {\n"
     ast += "\tassociatedtype ReturnType\n"
+    ast += "\tassociatedtype ErrorType: Error\n"
     for expr in expresssions {
-        ast += "\tfunc visit(_ \(expr.lowercased()): \(expr)) -> ReturnType\n"
+        ast += "\tfunc visit(_ \(expr.lowercased()): \(expr)) throws(ErrorType) -> ReturnType\n"
     }
     ast += "}\n\n"
 }
@@ -117,7 +119,8 @@ private func appendStructSignature(ast: inout String, expr: String) {
 }
 
 private func appendStructAcceptMethod(ast: inout String) {
-    ast += "\n\tfunc accept<T>(_ visitor: any Visitor<T>) -> T {\n\t\tvisitor.visit(self)\n\t}\n"
+    ast +=
+        "\n\tfunc accept<T, E: Error>(_ visitor: any Visitor<T, E>) throws(E) -> T {\n\t\ttry visitor.visit(self)\n\t}\n"
 }
 
 private func appendField(ast: inout String, name: String, type: String) {
