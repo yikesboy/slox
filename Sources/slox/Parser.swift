@@ -20,12 +20,8 @@ struct Parser {
         return peek().type == .EOF
     }
 
-    mutating func parse() -> Expression? {
-        do {
-            return try expression()
-        } catch {
-            return nil
-        }
+    mutating func parse() throws(ParserError) -> Expression {
+        return try expression()
     }
 
     mutating private func expression() throws(ParserError) -> Expression {
