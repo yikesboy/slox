@@ -1,7 +1,7 @@
 struct ASTPrinter: Visitor {
     typealias ReturnType = String
 
-    func print(expr: Expression) -> String {
+    func print(expr: Expr) -> String {
         return expr.accept(self)
     }
 
@@ -22,7 +22,7 @@ struct ASTPrinter: Visitor {
         return parenthesize(name: binary._operator.lexeme, expr: binary.left, binary.right)
     }
 
-    private func parenthesize(name: String, expr: Expression...) -> String {
+    private func parenthesize(name: String, expr: Expr...) -> String {
         return "(\(name) \(expr.map { $0.accept(self) }.joined(separator: " ")))"
     }
 }

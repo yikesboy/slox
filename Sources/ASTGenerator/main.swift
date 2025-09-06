@@ -101,7 +101,7 @@ private func appendGenerationComment(ast: inout String, path: String) {
 
 private func appendExpressionProtocol(ast: inout String) {
     ast +=
-        "protocol Expression {\n\tfunc accept<T, E: Error>(_ visitor: any Visitor<T, E>) throws(E) -> T\n}\n\n"
+        "protocol Expr {\n\tfunc accept<T, E: Error>(_ visitor: any Visitor<T, E>) throws(E) -> T\n}\n\n"
 }
 
 private func appendVisitorProtocol(ast: inout String, expresssions: [String]) {
@@ -115,7 +115,7 @@ private func appendVisitorProtocol(ast: inout String, expresssions: [String]) {
 }
 
 private func appendStructSignature(ast: inout String, expr: String) {
-    ast += "struct \(expr): Expression {\n"
+    ast += "struct \(expr): Expr {\n"
 }
 
 private func appendStructAcceptMethod(ast: inout String) {

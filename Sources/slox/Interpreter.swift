@@ -2,7 +2,7 @@ struct Interpreter: Visitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
-    func interpret(expression: Expression) throws(RuntimeError) {
+    func interpret(expression: Expr) throws(RuntimeError) {
         let value: Object = try expression.accept(self)
         print(value.toString)
     }

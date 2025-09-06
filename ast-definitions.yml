@@ -2,15 +2,15 @@ expressions:
   Binary:
     fields:
       - name: left
-        type: Expression
+        type: Expr
       - name: _operator
         type: Token
       - name: right
-        type: Expression
+        type: Expr
   Grouping:
     fields:
       - name: expression
-        type: Expression
+        type: Expr
   Literal:
     fields:
       - name: value
@@ -20,4 +20,4 @@ expressions:
       - name: _operator
         type: Token
       - name: right
-        type: Expression
+        type: Expr

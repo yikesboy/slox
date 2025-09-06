@@ -20,72 +20,72 @@ struct Parser {
         return peek().type == .EOF
     }
 
-    mutating func parse() throws(ParserError) -> Expression {
+    mutating func parse() throws(ParserError) -> Expr {
         return try expression()
     }
 
-    mutating private func expression() throws(ParserError) -> Expression {
+    mutating private func expression() throws(ParserError) -> Expr {
         return try equality()
     }
 
-    mutating private func equality() throws(ParserError) -> Expression {
-        var expression: Expression = try comparison()
+    mutating private func equality() throws(ParserError) -> Expr {
+        var expression: Expr = try comparison()
         while match(types: .BANG_EQUAL, .EQUAL_EQUAL) {
             let _operator: Token = previous()
-            let right: Expression = try comparison()
+            let right: Expr = try comparison()
             expression = Binary(left: expression, _operator: _operator, right: right)
         }
 
         return expression
     }
 
-    mutating private func comparison() throws(ParserError) -> Expression {
-        var expression: Expression = try term()
+    mutating private func comparison() throws(ParserError) -> Expr {
+        var expression: Expr = try term()
 
         while match(types: .GREATER, .GREATER_EQUAL, .LESS, .LESS_EQUAL) {
             let _operator: Token = previous()
-            let right: Expression = try term()
+            let right: Expr = try term()
             expression = Binary(left: expression, _operator: _operator, right: right)
         }
 
         return expression
     }
 
-    mutating private func term() throws(ParserError) -> Expression {
-        var expression: Expression = try factor()
+    mutating private func term() throws(ParserError) -> Expr {
+        var expression: Expr = try factor()
 
         while match(types: .MINUS, .PLUS) {
             let _operator: Token = previous()
-            let right: Expression = try factor()
+            let right: Expr = try factor()
             expression = Binary(left: expression, _operator: _operator, right: right)
         }
 
         return expression
     }
 
-    mutating private func factor() throws(ParserError) -> Expression {
-        var expression: Expression = try unary()
+    mutating private func factor() throws(ParserError) -> Expr {
+        var expression: Expr = try unary()
 
         while match(types: .SLASH, .STAR) {
             let _operator: Token = previous()
-            let right: Expression = try unary()
+            let right: Expr = try unary()
             expression = Binary(left: expression, _operator: _operator, right: right)
         }
 
         return expression
     }
 
-    mutating private func unary() throws(ParserError) -> Expression {
+    mutating private func unary() throws(ParserError) -> Expr {
         if match(types: .BANG, .MINUS) {
             let _operator: Token = previous()
-            let right: Expression = try unary()
+            let right: Expr = try unary()
             return Unary(_operator: _operator, right: right)
         }
 
         return try primary()
     }
 
-    mutating private func primary() throws(ParserError) -> Expression {
+    mutating private func primary() throws(ParserError) -> Expr {
         switch peek().type {
         case .NUMBER, .STRING:
             let token = advance()
@@ -103,7 +103,7 @@ struct Parser {
             return Literal(value: .Nil)
         case .LEFT_PAREN:
             _ = advance()
-            let expression: Expression = try expression()
+            let expression: Expr = try expression()
             _ = try consume(.RIGHT_PAREN)
             return Grouping(expression: expression)
         default: break
