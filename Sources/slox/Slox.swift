@@ -44,20 +44,27 @@ struct Slox {
 
     private static func run(source: String) throws {
         var scanner = SloxScanner(source: source)
+        let interpreter = Interpreter()
         do {
             let tokens = try scanner.scanTokens()
             var parser = Parser(tokens: tokens)
             let expression = try parser.parse()
-            print(ASTPrinter().print(expr: expression))
-        } catch let error as ReportableError {
-            report(line: error.line, _where: "", message: error.message)
+            try interpreter.interpret(expression: expression)
+        } catch let error as ScannerError {
+            report(errorType: "ScannerError", line: error.line, _where: "", message: error.message)
+            throw error
+        } catch let error as ParserError {
+            report(errorType: "ParserError", line: error.line, _where: "", message: error.message)
+            throw error
+        } catch let error as RuntimeError {
+            report(errorType: "RuntimeError", line: error.line, _where: "", message: error.message)
             throw error
         }
 
     }
 
     // TODO: replace with more solid approach
-    private static func report(line: Int, _where: String, message: String) {
-        print("[line \(line)] Error\(_where): \(message)")
+    private static func report(errorType: String, line: Int, _where: String, message: String) {
+        print("[line \(line)] \(errorType): \(_where): \(message)")
     }
 }
