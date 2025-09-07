@@ -48,8 +48,8 @@ struct Slox {
         do {
             let tokens = try scanner.scanTokens()
             var parser = Parser(tokens: tokens)
-            let expression = try parser.parse()
-            try interpreter.interpret(expression: expression)
+            let statements = try parser.parse()
+            try interpreter.interpret(statements: statements)
         } catch let error as ScannerError {
             report(errorType: "ScannerError", line: error.line, _where: "", message: error.message)
             throw error
