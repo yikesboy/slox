@@ -1,10 +1,11 @@
-struct Interpreter: Visitor {
+struct Interpreter: ExprVisitor, StmtVisitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
-    func interpret(expression: Expr) throws(RuntimeError) {
-        let value: Object = try expression.accept(self)
-        print(value.toString)
+    func interpret(statements: [Stmt]) throws(RuntimeError) {
+        for stmt in statements {
+            try stmt.accept(self)
+        }
     }
 
     func visit(_ literal: Literal) -> ReturnType {
@@ -123,5 +124,14 @@ struct Interpreter: Visitor {
         case .EQUAL_EQUAL:
             return .Boolean(right == left)
         }
+    }
+
+    func visit(_ expression: Expression) throws(ErrorType) {
+        try expression.accept(self)
+    }
+
+    func visit(_ print: Print) throws(ErrorType) {
+        let value: Object = try print.expression.accept(self)
+        Swift.print(value.toString)
     }
 }
