@@ -85,7 +85,7 @@ do {
     print("============YAML-Error=============")
     print("Error: \(errorInfo.title)")
     print("Location: \(errorInfo.location)")
-    print("Expected: \(errorInfo.details)")
+    print("Expected: \(errorInfo.details ?? "n/a")")
     print("Tip: \(errorInfo.tip)")
     print("====================================")
     exit(1)
@@ -167,20 +167,14 @@ private func generateStruct(name: String, from definition: StructDefinition) -> 
     }
 
     // NOTE: can/will be improved if the requirements are fully fleshed out
-    let visitorType: String
     if let conformsTo = definition.conformsTo {
         if conformsTo.contains("Expr") {
-            visitorType = "ExprVisitor"
+            result +=
+                "\tfunc accept<T, E: Error>(_ visitor: any ExprVisitor<T, E>) throws(E) -> T {\n"
         } else if conformsTo.contains("Stmt") {
-            visitorType = "StmtVisitor"
-        } else {
-            visitorType = "Visitor"
+            result += "\tfunc accept<E: Error>(_ visitor: any StmtVisitor<E>) throws(E) {\n"
         }
-    } else {
-        visitorType = "Visitor"
     }
-
-    result += "\tfunc accept<T, E: Error>(_ visitor: any \(visitorType)<T, E>) throws(E) -> T {\n"
     result += "\t\ttry visitor.visit(self)\n"
     result += "\t}\n"
 
