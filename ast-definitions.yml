@@ -11,12 +11,12 @@ protocols:
   Stmt:
     functions:
       - name: accept
-        generic_params: [T, "E: Error"]
+        generic_params: ["E: Error"]
         params:
           - name: visitor
-            type: "any StmtVisitor<T, E>"
+            type: "any StmtVisitor<E>"
         throwing: E
-        returns: T
+        returns: Void
   ExprVisitor:
     generic_params: [ReturnType, ErrorType]
     associated_types:
@@ -49,9 +49,8 @@ protocols:
         throwing: ErrorType
         returns: ReturnType
   StmtVisitor:
-    generic_params: [ReturnType, ErrorType]
+    generic_params: [ErrorType]
     associated_types:
-      - name: ReturnType
       - name: ErrorType
         constraints: [Error]
     functions:
@@ -60,13 +59,11 @@ protocols:
           - name: expression
             type: Expression
         throwing: ErrorType
-        returns: ReturnType
       - name: visit
         params:
           - name: print
             type: Print
         throwing: ErrorType
-        returns: ReturnType
 structs:
   Binary:
     conforms_to: [Expr]
