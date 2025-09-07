@@ -20,12 +20,38 @@ struct Parser {
         return peek().type == .EOF
     }
 
-    mutating func parse() throws(ParserError) -> Expr {
-        return try expression()
+    mutating func parse() throws(ParserError) -> [Stmt] {
+        var statements: [Stmt] = []
+        while !isAtEnd {
+            let stmt: Stmt = try statement()
+            statements.append(stmt)
+        }
+
+        return statements
     }
 
     mutating private func expression() throws(ParserError) -> Expr {
         return try equality()
+    }
+
+    mutating private func statement() throws(ParserError) -> Stmt {
+        if match(types: .PRINT) {
+            return try printStatement()
+        }
+
+        return try expressionStatement()
+    }
+
+    mutating private func printStatement() throws(ParserError) -> Stmt {
+        let value: Expr = try expression()
+        _ = try consume(.SEMICOLON)
+        return Print(expression: value)
+    }
+
+    mutating private func expressionStatement() throws(ParserError) -> Stmt {
+        let expression: Expr = try expression()
+        _ = try consume(.SEMICOLON)
+        return Expression(expression: expression)
     }
 
     mutating private func equality() throws(ParserError) -> Expr {
