@@ -1,5 +1,75 @@
-expressions:
+protocols:
+  Expr:
+    functions:
+      - name: accept
+        generic_params: [T, "E: Error"]
+        params:
+          - name: visitor
+            type: "any ExprVisitor<T, E>"
+        throwing: E
+        returns: T
+  Stmt:
+    functions:
+      - name: accept
+        generic_params: [T, "E: Error"]
+        params:
+          - name: visitor
+            type: "any StmtVisitor<T, E>"
+        throwing: E
+        returns: T
+  ExprVisitor:
+    generic_params: [ReturnType, ErrorType]
+    associated_types:
+      - name: ReturnType
+      - name: ErrorType
+        constraints: [Error]
+    functions:
+      - name: visit
+        params:
+          - name: literal
+            type: Literal
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: grouping
+            type: Grouping
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: binary
+            type: Binary
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: unary
+            type: Unary
+        throwing: ErrorType
+        returns: ReturnType
+  StmtVisitor:
+    generic_params: [ReturnType, ErrorType]
+    associated_types:
+      - name: ReturnType
+      - name: ErrorType
+        constraints: [Error]
+    functions:
+      - name: visit
+        params:
+          - name: expression
+            type: Expression
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: print
+            type: Print
+        throwing: ErrorType
+        returns: ReturnType
+structs:
   Binary:
+    conforms_to: [Expr]
     fields:
       - name: left
         type: Expr
@@ -8,16 +78,29 @@ expressions:
       - name: right
         type: Expr
   Grouping:
+    conforms_to: [Expr]
     fields:
       - name: expression
         type: Expr
   Literal:
+    conforms_to: [Expr]
     fields:
       - name: value
         type: Object
   Unary:
+    conforms_to: [Expr]
     fields:
       - name: _operator
         type: Token
       - name: right
+        type: Expr
+  Expression:
+    conforms_to: [Stmt]
+    fields:
+      - name: expression
+        type: Expr
+  Print:
+    conforms_to: [Stmt]
+    fields:
+      - name: expression
         type: Expr
