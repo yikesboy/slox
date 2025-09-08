@@ -48,6 +48,18 @@ protocols:
             type: Unary
         throwing: ErrorType
         returns: ReturnType
+      - name: visit
+        params:
+          - name: variable
+            type: Variable
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: assign
+            type: Assign
+        throwing: ErrorType
+        returns: ReturnType
   StmtVisitor:
     generic_params: [ErrorType]
     associated_types:
@@ -63,6 +75,11 @@ protocols:
         params:
           - name: print
             type: Print
+        throwing: ErrorType
+      - name: visit
+        params:
+          - name: _var
+            type: Var
         throwing: ErrorType
 structs:
   Binary:
@@ -91,6 +108,18 @@ structs:
         type: Token
       - name: right
         type: Expr
+  Variable:
+    conforms_to: [Expr]
+    fields:
+      - name: name
+        type: Token
+  Assign:
+    conforms_to: [Expr]
+    fields:
+      - name: name
+        type: Token
+      - name: value
+        type: Expr
   Expression:
     conforms_to: [Stmt]
     fields:
@@ -101,3 +130,10 @@ structs:
     fields:
       - name: expression
         type: Expr
+  Var:
+    conforms_to: [Stmt]
+    fields:
+      - name: name
+        type: Token
+      - name: initializer
+        type: Expr?
