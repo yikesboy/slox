@@ -26,18 +26,49 @@ struct Parser {
         return peek().type == .EOF
     }
 
-    mutating func parse() throws(ParserError) -> [Stmt] {
+    mutating func parse() -> [Stmt] {
         var statements: [Stmt] = []
         while !isAtEnd {
-            let stmt: Stmt = try statement()
-            statements.append(stmt)
+            do {
+                if let stmt: Stmt = try declaration() {
+                    statements.append(stmt)
+                }
+            } catch {
+                Slox.error(error: error)
+                // Note: we cant just ignore eventually.
+            }
         }
 
         return statements
     }
 
     mutating private func expression() throws(ParserError) -> Expr {
-        return try equality()
+        return try assignment()
+    }
+
+    mutating private func declaration() throws(ParserError) -> Stmt? {
+        do {
+            if match(types: .VAR) {
+                return try varDeclaration()
+            }
+            return try statement()
+        } catch {
+            synchronize()
+            throw error
+        }
+    }
+
+    mutating private func varDeclaration() throws(ParserError) -> Stmt? {
+        let name: Token = try consume(.IDENTIFIER)
+
+        var initializer: Expr? = nil
+        if match(types: .EQUAL) {
+            initializer = try expression()
+        }
+
+        _ = try consume(.SEMICOLON)
+
+        return Var(name: name, initializer: initializer)
     }
 
     mutating private func statement() throws(ParserError) -> Stmt {
@@ -58,6 +89,24 @@ struct Parser {
         let expression: Expr = try expression()
         _ = try consume(.SEMICOLON)
         return Expression(expression: expression)
+    }
+
+    mutating private func assignment() throws(ParserError) -> Expr {
+        let expr: Expr = try equality()
+
+        if match(types: .EQUAL) {
+            let equals: Token = previous()
+            let value: Expr = try assignment()
+
+            guard let variable = expr as? Variable  else {
+                throw .invalidAssignmentTarget(equals)
+            }
+            
+            let name: Token = variable.name
+            return Assign(name: name, value: value)
+        }
+
+        return expr
     }
 
     mutating private func equality() throws(ParserError) -> Expr {
@@ -133,6 +182,9 @@ struct Parser {
         case .NIL:
             _ = advance()
             return Literal(value: .Nil)
+        case .IDENTIFIER:
+            let token = advance()
+            return Variable(name: token)  // NOTE: ???
         case .LEFT_PAREN:
             _ = advance()
             let expression: Expr = try expression()
@@ -191,7 +243,7 @@ struct Parser {
 
     mutating private func consume(_ tokenType: TokenType) throws(ParserError) -> Token {
         guard check(type: tokenType) else {
-            throw .expected(peek())
+            throw .expected(expected: tokenType, got: peek())
         }
 
         return advance()
