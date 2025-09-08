@@ -2,6 +2,10 @@ enum ScannerError: ReportableError {
     case unexpectedCharacter(_ character: Character, _ line: Int)
     case unterminatedString(_ line: Int)
 
+    var errorType: String {
+        String(describing: Self.self)
+    }
+
     var line: Int {
         switch self {
         case .unexpectedCharacter(_, let line), .unterminatedString(let line): return line
