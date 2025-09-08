@@ -2,9 +2,15 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
-    func interpret(statements: [Stmt]) throws(RuntimeError) {
-        for stmt in statements {
-            try stmt.accept(self)
+    private let environment = Environment()
+
+    func interpret(statements: [Stmt]) throws(SloxError) {
+        do {
+            for stmt in statements {
+                try stmt.accept(self)
+            }
+        } catch {
+            throw .runtime(error)
         }
     }
 
@@ -127,11 +133,36 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     }
 
     func visit(_ expression: Expression) throws(ErrorType) {
-        try expression.accept(self)
+        try expression.expression.accept(self)
     }
 
     func visit(_ print: Print) throws(ErrorType) {
         let value: Object = try print.expression.accept(self)
         Swift.print(value.toString)
+    }
+
+    func visit(_ _var: Var) throws(ErrorType) {
+        let value: Object
+        if let initializer = _var.initializer {
+            value = try initializer.accept(self)
+        } else {
+            value = .Nil
+        }
+
+        environment.define(name: _var.name.lexeme, value: value)
+    }
+
+    func visit(_ variable: Variable) throws(ErrorType) -> ReturnType {
+        guard let value: Object = environment.get(name: variable.name) else {
+            throw .undefinedVariable(variable.name)
+        }
+
+        return value
+    }
+
+    func visit(_ assign: Assign) throws(RuntimeError) -> ReturnType {
+        let value: Object = try assign.value.accept(self)
+        try environment.assign(name: assign.name, value: value)
+        return value
     }
 }
