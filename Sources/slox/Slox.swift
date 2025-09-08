@@ -2,31 +2,32 @@ import Foundation
 
 @main
 struct Slox {
-    static func main() throws {
+    static func main() {
         let argv = CommandLine.arguments
         let argc = argv.count
         if argc == 1 {
-            try runPrompt()
+            runPrompt()
         } else if argc == 2 {
-            try runFile(argv[1])
+            runFile(argv[1])
         } else {
             print("Usage: slox [script]")
         }
     }
 
-    private static func runPrompt() throws {
+    private static func runPrompt() {
+        var interpreter = Interpreter()
         while true {
             print("> ")
-            let line = readLine()
-            if let line = line {
-                _ = try? run(source: line)
-            } else {
-                break
+            guard let line = readLine() else { break }
+            do {
+                try run(interpreter: &interpreter, source: line)
+            } catch {
+                Slox.error(error: error)
             }
         }
     }
 
-    private static func runFile(_ script: String) throws {
+    private static func runFile(_ script: String) {
         do {
             let url = URL(filePath: script)
             let data = try Data(contentsOf: url)
@@ -34,37 +35,30 @@ struct Slox {
                 print("Error: Unable to decode file \(script) as utf8")
                 exit(65)
             }
-            try run(source: content)
-        } catch is ScannerError {
+            var interpreter = Interpreter()
+            try run(interpreter: &interpreter, source: content)
+        } catch let error as ReportableError {
+            Slox.error(error: error)
             exit(65)
         } catch {
-            print("Error: Error reading file \(script): \(error.localizedDescription)")
+            print("Error reading file \(script): \(error.localizedDescription)")
+            exit(65)
         }
     }
 
-    private static func run(source: String) throws {
+    private static func run(interpreter: inout Interpreter, source: String) throws(SloxError) {
         var scanner = SloxScanner(source: source)
-        let interpreter = Interpreter()
-        do {
-            let tokens = try scanner.scanTokens()
-            var parser = Parser(tokens: tokens)
-            let statements = try parser.parse()
-            try interpreter.interpret(statements: statements)
-        } catch let error as ScannerError {
-            report(errorType: "ScannerError", line: error.line, _where: "", message: error.message)
-            throw error
-        } catch let error as ParserError {
-            report(errorType: "ParserError", line: error.line, _where: "", message: error.message)
-            throw error
-        } catch let error as RuntimeError {
-            report(errorType: "RuntimeError", line: error.line, _where: "", message: error.message)
-            throw error
-        }
-
+        let tokens = try scanner.scanTokens()
+        var parser = Parser(tokens: tokens)
+        let statements = parser.parse()  // NOTE: has to throw evenutally
+        try interpreter.interpret(statements: statements)
     }
 
-    // TODO: replace with more solid approach
-    private static func report(errorType: String, line: Int, _where: String, message: String) {
-        print("[line \(line)] \(errorType): \(_where): \(message)")
+    static func error(error: ReportableError) {
+        report(errorType: error.errorType, line: error.line, message: error.message)
+    }
+
+    private static func report(errorType: String, line: Int, message: String) {
+        print("[line \(line)] \(errorType): \(message)")
     }
 }
