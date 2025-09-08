@@ -14,10 +14,10 @@ struct SloxScanner {
         self.source = source
     }
 
-    mutating func scanTokens() throws(ScannerError) -> [Token] {
+    mutating func scanTokens() throws(SloxError) -> [Token] {
         while !isAtEnd {
             start = current
-            try scanToken()
+            do { try scanToken() } catch { throw .scanner(error) }
         }
 
         tokens.append(.init(type: .EOF, lexeme: "", literal: nil, line: line))
