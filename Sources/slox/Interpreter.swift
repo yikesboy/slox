@@ -2,28 +2,28 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
-    private let environment = Environment()
+    private var globalEnvironment = Environment()
 
-    func interpret(statements: [Stmt]) throws(SloxError) {
-        do {
+    mutating func interpret(statements: [Stmt]) throws(SloxError) {
+        do throws(ErrorType) {
             for stmt in statements {
-                try stmt.accept(self)
+                try stmt.accept(self, &globalEnvironment)
             }
         } catch {
             throw .runtime(error)
         }
     }
 
-    func visit(_ literal: Literal) -> ReturnType {
+    func visit(_ literal: Literal, _ env: inout Environment) -> ReturnType {
         return literal.value
     }
 
-    func visit(_ grouping: Grouping) throws(ErrorType) -> ReturnType {
-        try grouping.expression.accept(self)
+    func visit(_ grouping: Grouping, _ env: inout Environment) throws(ErrorType) -> ReturnType {
+        try grouping.expression.accept(self, &env)
     }
 
-    func visit(_ unary: Unary) throws(ErrorType) -> ReturnType {
-        let right: Object = try unary.right.accept(self)
+    func visit(_ unary: Unary, _ env: inout Environment) throws(ErrorType) -> ReturnType {
+        let right: Object = try unary.right.accept(self, &env)
 
         guard let op = unary._operator.type.asUnaryOp else {
             fatalError("Unsupported unary operator: \(unary._operator.type)")
@@ -43,9 +43,9 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
     }
 
-    func visit(_ binary: Binary) throws(ErrorType) -> ReturnType {
-        let right: Object = try binary.right.accept(self)
-        let left: Object = try binary.left.accept(self)
+    func visit(_ binary: Binary, _ env: inout Environment) throws(ErrorType) -> ReturnType {
+        let right: Object = try binary.right.accept(self, &env)
+        let left: Object = try binary.left.accept(self, &env)
 
         guard let op = binary._operator.type.asBinaryOp else {
             fatalError("Unsupported binary operator: \(binary._operator.type)")
@@ -132,37 +132,49 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
     }
 
-    func visit(_ expression: Expression) throws(ErrorType) {
-        try expression.expression.accept(self)
+    func visit(_ expression: Expression, _ env: inout Environment) throws(ErrorType) {
+        _ = try expression.expression.accept(self, &env)
     }
 
-    func visit(_ print: Print) throws(ErrorType) {
-        let value: Object = try print.expression.accept(self)
+    func visit(_ print: Print, _ env: inout Environment) throws(ErrorType) {
+        let value: Object = try print.expression.accept(self, &env)
         Swift.print(value.toString)
     }
 
-    func visit(_ _var: Var) throws(ErrorType) {
+    func visit(_ _var: Var, _ env: inout Environment) throws(ErrorType) {
         let value: Object
         if let initializer = _var.initializer {
-            value = try initializer.accept(self)
+            value = try initializer.accept(self, &env)
         } else {
             value = .Nil
         }
 
-        environment.define(name: _var.name.lexeme, value: value)
+        env.define(name: _var.name.lexeme, value: value)
     }
 
-    func visit(_ variable: Variable) throws(ErrorType) -> ReturnType {
-        guard let value: Object = environment.get(name: variable.name) else {
+    func visit(_ variable: Variable, _ env: inout Environment) throws(ErrorType) -> ReturnType {
+        guard let value: Object = env.get(name: variable.name) else {
             throw .undefinedVariable(variable.name)
         }
 
         return value
     }
 
-    func visit(_ assign: Assign) throws(RuntimeError) -> ReturnType {
-        let value: Object = try assign.value.accept(self)
-        try environment.assign(name: assign.name, value: value)
+    func visit(_ assign: Assign, _ env: inout Environment) throws(RuntimeError) -> ReturnType {
+        let value: Object = try assign.value.accept(self, &env)
+        try env.assign(name: assign.name, value: value)
         return value
+    }
+
+    func visit(_ block: Block, _ env: inout Environment) throws(RuntimeError) {
+        var blockEnvironment = Environment(enclosing: env)
+        try executeBlock(statements: block.statements, env: &blockEnvironment)
+
+    }
+
+    func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {
+        for stmt in statements {
+            try stmt.accept(self, &env)
+        }
     }
 }
