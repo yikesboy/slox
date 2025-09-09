@@ -1,19 +1,34 @@
 class Environment {
+    var enclosing: Environment?
     private var values = [String: Object]()
+
+    init(enclosing: Environment? = nil) {
+        self.enclosing = enclosing
+    }
 
     func define(name: String, value: Object) {
         values[name] = value
     }
 
     func get(name: Token) -> Object? {
-        return values[name.lexeme]
+        if let value = values[name.lexeme] {
+            return value
+        }
+
+        return enclosing?.get(name: name)
     }
 
     func assign(name: Token, value: Object) throws(RuntimeError) {
-        guard values.keys.contains(name.lexeme) else {
-            throw .undefinedVariable(name)
+        if values.keys.contains(name.lexeme) {
+            values[name.lexeme] = value
+            return
         }
 
-        values[name.lexeme] = value
+        if let enclosing = enclosing {
+            try enclosing.assign(name: name, value: value)
+            return
+        }
+
+        throw .undefinedVariable(name)
     }
 }
