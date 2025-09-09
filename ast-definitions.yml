@@ -1,3 +1,4 @@
+---
 protocols:
   Expr:
     functions:
@@ -81,6 +82,11 @@ protocols:
           - name: _var
             type: Var
         throwing: ErrorType
+      - name: visit
+        params:
+          - name: block
+            type: Block
+        throwing: ErrorType
 structs:
   Binary:
     conforms_to: [Expr]
@@ -137,3 +143,8 @@ structs:
         type: Token
       - name: initializer
         type: Expr?
+  Block:
+    conforms_to: [Stmt]
+    fields:
+      - name: statements
+        type: "[Stmt]"
