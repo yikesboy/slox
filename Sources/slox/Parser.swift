@@ -30,9 +30,7 @@ struct Parser {
         var statements: [Stmt] = []
         while !isAtEnd {
             do {
-                if let stmt: Stmt = try declaration() {
-                    statements.append(stmt)
-                }
+                statements.append(try declaration())
             } catch {
                 Slox.error(error: error)
                 // Note: we cant just ignore eventually.
@@ -46,7 +44,7 @@ struct Parser {
         return try assignment()
     }
 
-    mutating private func declaration() throws(ParserError) -> Stmt? {
+    mutating private func declaration() throws(ParserError) -> Stmt {
         do {
             if match(types: .VAR) {
                 return try varDeclaration()
@@ -58,10 +56,10 @@ struct Parser {
         }
     }
 
-    mutating private func varDeclaration() throws(ParserError) -> Stmt? {
+    mutating private func varDeclaration() throws(ParserError) -> Stmt {
         let name: Token = try consume(.IDENTIFIER)
 
-        var initializer: Expr? = nil
+        var initializer: Expr?
         if match(types: .EQUAL) {
             initializer = try expression()
         }
@@ -76,7 +74,22 @@ struct Parser {
             return try printStatement()
         }
 
+        if match(types: .LEFT_BRACE) {
+            return Block(statements: try block())
+        }
+
         return try expressionStatement()
+    }
+
+    mutating private func block() throws(ParserError) -> [Stmt] {
+        var statements: [Stmt] = []
+        while !check(type: .RIGHT_BRACE) && !isAtEnd {
+            statements.append(try declaration())
+        }
+
+        _ = try consume(.RIGHT_BRACE)
+
+        return statements
     }
 
     mutating private func printStatement() throws(ParserError) -> Stmt {
@@ -98,10 +111,10 @@ struct Parser {
             let equals: Token = previous()
             let value: Expr = try assignment()
 
-            guard let variable = expr as? Variable  else {
+            guard let variable = expr as? Variable else {
                 throw .invalidAssignmentTarget(equals)
             }
-            
+
             let name: Token = variable.name
             return Assign(name: name, value: value)
         }
