@@ -1,4 +1,4 @@
-struct ASTPrinter: Visitor {
+/*struct ASTPrinter: ExprVisitor, StmtVisitor {
     typealias ReturnType = String
 
     func print(expr: Expr) -> String {
@@ -25,4 +25,4 @@ struct ASTPrinter: Visitor {
     private func parenthesize(name: String, expr: Expr...) -> String {
         return "(\(name) \(expr.map { $0.accept(self) }.joined(separator: " ")))"
     }
-}
+}*/
