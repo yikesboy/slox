@@ -70,6 +70,10 @@ struct Parser {
     }
 
     mutating private func statement() throws(ParserError) -> Stmt {
+        if match(types: .IF) {
+            return try ifStatement()
+        }
+
         if match(types: .PRINT) {
             return try printStatement()
         }
@@ -79,6 +83,21 @@ struct Parser {
         }
 
         return try expressionStatement()
+    }
+
+    mutating private func ifStatement() throws(ParserError) -> Stmt {
+        _ = try consume(.LEFT_PAREN)
+        let condition: Expr = try expression()
+        _ = try consume(.RIGHT_PAREN)
+
+        let thenBranch: Stmt = try statement()
+        var elseBranch: Stmt?
+
+        if match(types: .ELSE) {
+            elseBranch = try statement()
+        }
+
+        return _If(condition: condition, thenBranch: thenBranch, elseBranch: elseBranch)
     }
 
     mutating private func block() throws(ParserError) -> [Stmt] {

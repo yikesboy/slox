@@ -172,6 +172,16 @@ struct Interpreter: ExprVisitor, StmtVisitor {
 
     }
 
+    func visit(_ _if: _If, _ env: inout Environment) throws(RuntimeError) {
+        let evaluatedIf = try _if.condition.accept(self, &env)
+
+        if evaluatedIf.isTruthy {
+            try _if.thenBranch.accept(self, &env)
+        } else if let elseBranch = _if.elseBranch {
+            try elseBranch.accept(self, &env)
+        }
+    }
+
     func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {
         for stmt in statements {
             try stmt.accept(self, &env)
