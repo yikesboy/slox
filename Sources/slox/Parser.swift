@@ -124,7 +124,7 @@ struct Parser {
     }
 
     mutating private func assignment() throws(ParserError) -> Expr {
-        let expr: Expr = try equality()
+        let expr: Expr = try or()
 
         if match(types: .EQUAL) {
             let equals: Token = previous()
@@ -139,6 +139,30 @@ struct Parser {
         }
 
         return expr
+    }
+
+    mutating private func or() throws(ParserError) -> Expr {
+        var expression: Expr = try and()
+
+        while match(types: .OR) {
+            let _operator: Token = previous()
+            let right: Expr = try and()
+            expression = Logical(left: expression, _operator: _operator, right: right)
+        }
+
+        return expression
+    }
+
+    mutating private func and() throws(ParserError) -> Expr {
+        var expression: Expr = try equality()
+
+        while match(types: .AND) {
+            let _operator: Token = previous()
+            let right: Expr = try equality()
+            expression = Logical(left: expression, _operator: _operator, right: right)
+        }
+
+        return expression
     }
 
     mutating private func equality() throws(ParserError) -> Expr {

@@ -182,6 +182,17 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
     }
 
+    func visit(_ logical: Logical, _ env: inout Environment) throws(ErrorType) -> ReturnType {
+        let left: Object = try logical.left.accept(self, &env)
+        let operatorType = logical._operator.type
+
+        if (operatorType == .OR && left.isTruthy) || (operatorType == .AND && !left.isTruthy) {
+            return left
+        } 
+
+        return try logical.right.accept(self, &env)
+    }
+
     func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {
         for stmt in statements {
             try stmt.accept(self, &env)

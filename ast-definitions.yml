@@ -61,6 +61,12 @@ protocols:
             type: Assign
         throwing: ErrorType
         returns: ReturnType
+      - name: visit
+        params:
+          - name: logical
+            type: Logical
+        throwing: ErrorType
+        returns: ReturnType
   StmtVisitor:
     generic_params: [ErrorType]
     associated_types:
@@ -130,6 +136,15 @@ structs:
       - name: name
         type: Token
       - name: value
+        type: Expr
+  Logical:
+    conforms_to: [Expr]
+    fields:
+      - name: left
+        type: Expr
+      - name: _operator
+        type: Token
+      - name: right
         type: Expr
   Expression:
     conforms_to: [Stmt]
