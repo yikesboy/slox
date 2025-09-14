@@ -70,6 +70,14 @@ struct Parser {
     }
 
     mutating private func statement() throws(ParserError) -> Stmt {
+        if match(types: .FOR) {
+            return try forStatement()
+        }
+
+        if match(types: .WHILE) {
+            return try whileStatement()
+        }
+
         if match(types: .IF) {
             return try ifStatement()
         }
@@ -83,6 +91,55 @@ struct Parser {
         }
 
         return try expressionStatement()
+    }
+
+    mutating private func forStatement() throws(ParserError) -> Stmt {
+        _ = try consume(.LEFT_PAREN)
+
+        let initializer: Stmt?
+        if match(types: .SEMICOLON) {
+            initializer = nil
+        } else if match(types: .VAR) {
+            initializer = try varDeclaration()
+        } else {
+            initializer = try expressionStatement()
+        }
+
+        var condition: Expr = Literal(value: .Boolean(true))
+        if !check(type: .SEMICOLON) {
+            condition = try expression()
+        }
+        _ = try consume(.SEMICOLON)
+
+        var increment: Expr?
+        if !check(type: .RIGHT_PAREN) {
+            increment = try expression()
+        }
+        _ = try consume(.RIGHT_PAREN)
+
+        var body: Stmt = try statement()
+
+        if let increment = increment {
+            let incExpr = Expression(expression: increment)
+            body = Block(statements: [body, incExpr])
+        }
+
+        body = _While(condition: condition, body: body)
+
+        if let initializer = initializer {
+            body = Block(statements: [initializer, body])
+        }
+
+        return body
+    }
+
+    mutating private func whileStatement() throws(ParserError) -> Stmt {
+        _ = try consume(.LEFT_PAREN)
+        let condition: Expr = try expression()
+        _ = try consume(.RIGHT_PAREN)
+        let body: Stmt = try statement()
+
+        return _While(condition: condition, body: body)
     }
 
     mutating private func ifStatement() throws(ParserError) -> Stmt {

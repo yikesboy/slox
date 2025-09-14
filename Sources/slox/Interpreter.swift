@@ -188,9 +188,15 @@ struct Interpreter: ExprVisitor, StmtVisitor {
 
         if (operatorType == .OR && left.isTruthy) || (operatorType == .AND && !left.isTruthy) {
             return left
-        } 
+        }
 
         return try logical.right.accept(self, &env)
+    }
+
+    func visit(_ _while: _While, _ env: inout Environment) throws(RuntimeError) {
+        while try _while.condition.accept(self, &env).isTruthy {
+            try _while.body.accept(self, &env)
+        }
     }
 
     func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {

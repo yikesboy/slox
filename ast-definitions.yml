@@ -98,6 +98,11 @@ protocols:
           - name: _if
             type: _If
         throwing: ErrorType
+      - name: visit
+        params:
+          - name: _while
+            type: _While
+        throwing: ErrorType
 structs:
   Binary:
     conforms_to: [Expr]
@@ -177,3 +182,10 @@ structs:
         type: Stmt
       - name: elseBranch
         type: Stmt?
+  _While:
+    conforms_to: [Stmt]
+    fields:
+      - name: condition
+        type: Expr
+      - name: body
+        type: Stmt
