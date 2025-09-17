@@ -16,7 +16,11 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     mutating func interpret(statements: [Stmt]) throws(SloxError) {
         do throws(ErrorType) {
             for stmt in statements {
-                try stmt.accept(self, &environment)
+                let result = try stmt.accept(self, &environment)
+                switch result {
+                case .Normal: break
+                case .Return(let value): fatalError("Value: \(value) reached top.")
+                }
             }
         } catch {
             throw .runtime(error)
@@ -141,16 +145,21 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
     }
 
-    func visit(_ expression: Expression, _ env: inout Environment) throws(ErrorType) {
+    func visit(_ expression: Expression, _ env: inout Environment) throws(ErrorType) -> ControlFlow
+    {
         _ = try expression.expression.accept(self, &env)
+
+        return .Normal
     }
 
-    func visit(_ print: Print, _ env: inout Environment) throws(ErrorType) {
+    func visit(_ print: Print, _ env: inout Environment) throws(ErrorType) -> ControlFlow {
         let value: Object = try print.expression.accept(self, &env)
         Swift.print(value.toString)
+
+        return .Normal
     }
 
-    func visit(_ _var: Var, _ env: inout Environment) throws(ErrorType) {
+    func visit(_ _var: Var, _ env: inout Environment) throws(ErrorType) -> ControlFlow {
         let value: Object
         if let initializer = _var.initializer {
             value = try initializer.accept(self, &env)
@@ -159,6 +168,8 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
 
         env.define(name: _var.name.lexeme, value: value)
+
+        return .Normal
     }
 
     func visit(_ variable: Variable, _ env: inout Environment) throws(ErrorType) -> ReturnType {
@@ -175,20 +186,22 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         return value
     }
 
-    func visit(_ block: Block, _ env: inout Environment) throws(RuntimeError) {
+    func visit(_ block: Block, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         var blockEnvironment = Environment(enclosing: env)
-        try executeBlock(statements: block.statements, env: &blockEnvironment)
 
+        return try executeBlock(statements: block.statements, env: &blockEnvironment)
     }
 
-    func visit(_ _if: _If, _ env: inout Environment) throws(RuntimeError) {
+    func visit(_ _if: _If, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         let evaluatedIf = try _if.condition.accept(self, &env)
 
         if evaluatedIf.isTruthy {
-            try _if.thenBranch.accept(self, &env)
+            return try _if.thenBranch.accept(self, &env)
         } else if let elseBranch = _if.elseBranch {
-            try elseBranch.accept(self, &env)
+            return try elseBranch.accept(self, &env)
         }
+
+        return .Normal
     }
 
     func visit(_ logical: Logical, _ env: inout Environment) throws(ErrorType) -> ReturnType {
@@ -202,10 +215,17 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         return try logical.right.accept(self, &env)
     }
 
-    func visit(_ _while: _While, _ env: inout Environment) throws(RuntimeError) {
+    func visit(_ _while: _While, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         while try _while.condition.accept(self, &env).isTruthy {
-            try _while.body.accept(self, &env)
+            let result = try _while.body.accept(self, &env)
+            switch result {
+            case .Normal: continue
+            case .Return(let value):
+                return .Return(value)
+            }
         }
+
+        return .Normal
     }
 
     func visit(_ call: Call, _ env: inout Environment) throws(RuntimeError) -> Object {
@@ -228,17 +248,40 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         return try function.call(interpreter: self, arguments: arguments)
     }
 
-    func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) {
+    func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         let function: SloxFunction = SloxFunction(declaration: function)
         env.define(
             name: function.declaration.name.lexeme, value: .Callable(.userDefined(function))
         )
+
+        return .Normal
     }
 
-    func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {
-        for stmt in statements {
-            try stmt.accept(self, &env)
+    func visit(_ _return: Return, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
+        let value: Object
+
+        if let rv = _return.value {
+            value = try rv.accept(self, &env)
+        } else {
+            value = .Nil
         }
+
+        return .Return(value)
+    }
+
+    func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError)
+        -> ControlFlow
+    {
+        for stmt in statements {
+            let result = try stmt.accept(self, &env)
+            switch result {
+            case .Normal: continue
+            case .Return(let value):
+                return .Return(value)
+            }
+        }
+
+        return .Normal
     }
 
     private func defineNativeFunctions() {

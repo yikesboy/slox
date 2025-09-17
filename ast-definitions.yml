@@ -17,7 +17,7 @@ protocols:
           - name: visitor
             type: "any StmtVisitor<E>"
         throwing: E
-        returns: Void
+        returns: ControlFlow
   ExprVisitor:
     generic_params: [ReturnType, ErrorType]
     associated_types:
@@ -84,41 +84,49 @@ protocols:
           - name: expression
             type: Expression
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: print
             type: Print
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: _var
             type: Var
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: block
             type: Block
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: _if
             type: _If
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: _while
             type: _While
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: function
             type: Function
         throwing: ErrorType
+        returns: ControlFlow
       - name: visit
         params:
           - name: _return
             type: Return
         throwing: ErrorType
+        returns: ControlFlow
 structs:
   Binary:
     conforms_to: [Expr]

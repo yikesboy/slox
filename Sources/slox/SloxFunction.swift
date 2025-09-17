@@ -12,9 +12,12 @@ struct SloxFunction: CallableProtocol, Equatable {
             environment.define(name: parameter.lexeme, value: argument)
         }
 
-        try interpreter.executeBlock(statements: declaration.body, env: &environment)
+        let result = try interpreter.executeBlock(statements: declaration.body, env: &environment)
 
-        return .Nil
+        switch result {
+        case .Normal: return .Nil
+        case .Return(let value): return value
+        }
     }
 
     static func == (lhs: SloxFunction, rhs: SloxFunction) -> Bool {
