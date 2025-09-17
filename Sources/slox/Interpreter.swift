@@ -249,7 +249,7 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     }
 
     func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
-        let function: SloxFunction = SloxFunction(declaration: function)
+        let function: SloxFunction = SloxFunction(declaration: function, closure: env)
         env.define(
             name: function.declaration.name.lexeme, value: .Callable(.userDefined(function))
         )
