@@ -67,6 +67,12 @@ protocols:
             type: Logical
         throwing: ErrorType
         returns: ReturnType
+      - name: visit
+        params:
+          - name: call
+            type: Call
+        throwing: ErrorType
+        returns: ReturnType
   StmtVisitor:
     generic_params: [ErrorType]
     associated_types:
@@ -102,6 +108,11 @@ protocols:
         params:
           - name: _while
             type: _While
+        throwing: ErrorType
+      - name: visit
+        params:
+          - name: function
+            type: Function
         throwing: ErrorType
 structs:
   Binary:
@@ -151,6 +162,15 @@ structs:
         type: Token
       - name: right
         type: Expr
+  Call:
+    conforms_to: [Expr]
+    fields:
+      - name: callee
+        type: Expr
+      - name: paren
+        type: Token
+      - name: arguments
+        type: "[Expr]"
   Expression:
     conforms_to: [Stmt]
     fields:
@@ -189,3 +209,12 @@ structs:
         type: Expr
       - name: body
         type: Stmt
+  Function:
+    conforms_to: [Stmt]
+    fields:
+      - name: name
+        type: Token
+      - name: params
+        type: "[Token]"
+      - name: body
+        type: "[Stmt]"
