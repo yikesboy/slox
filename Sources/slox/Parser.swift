@@ -46,6 +46,9 @@ struct Parser {
 
     mutating private func declaration() throws(ParserError) -> Stmt {
         do {
+            if match(types: .FUN) {
+                return try function(.function)
+            }
             if match(types: .VAR) {
                 return try varDeclaration()
             }
@@ -180,6 +183,29 @@ struct Parser {
         return Expression(expression: expression)
     }
 
+    mutating private func function(_ kind: FunctionKind) throws(ParserError) -> Function {
+        let name: Token = try consume(.IDENTIFIER)
+        _ = try consume(.LEFT_PAREN)
+
+        var params = [Token]()
+        if !check(type: .RIGHT_PAREN) {
+            repeat {
+                guard params.count <= 255 else {
+                    throw .toManyParameters(token: peek(), amount: params.count)
+                }
+                let parameter = try consume(.IDENTIFIER)
+                params.append(parameter)
+            } while match(types: .COMMA)
+        }
+
+        _ = try consume(.RIGHT_PAREN)
+        _ = try consume(.LEFT_BRACE)
+
+        let body: [Stmt] = try block()
+
+        return Function(name: name, params: params, body: body)
+    }
+
     mutating private func assignment() throws(ParserError) -> Expr {
         let expr: Expr = try or()
 
@@ -276,7 +302,38 @@ struct Parser {
             return Unary(_operator: _operator, right: right)
         }
 
-        return try primary()
+        return try call()
+    }
+
+    mutating private func call() throws(ParserError) -> Expr {
+        var expression: Expr = try primary()
+
+        while true {
+            if match(types: .LEFT_PAREN) {
+                expression = try finishCall(callee: expression)
+            } else {
+                break
+            }
+        }
+
+        return expression
+    }
+
+    mutating private func finishCall(callee: Expr) throws(ParserError) -> Expr {
+        var arguments = [Expr]()
+        if !check(type: .RIGHT_PAREN) {
+            repeat {
+                guard arguments.count <= 255 else {
+                    throw .toManyArguments(token: peek(), amount: arguments.count)
+                }
+                let expr = try expression()
+                arguments.append(expr)
+            } while match(types: .COMMA)
+        }
+
+        let paren: Token = try consume(.RIGHT_PAREN)
+
+        return Call(callee: callee, paren: paren, arguments: arguments)
     }
 
     mutating private func primary() throws(ParserError) -> Expr {
@@ -297,7 +354,7 @@ struct Parser {
             return Literal(value: .Nil)
         case .IDENTIFIER:
             let token = advance()
-            return Variable(name: token)  // NOTE: ???
+            return Variable(name: token)
         case .LEFT_PAREN:
             _ = advance()
             let expression: Expr = try expression()
@@ -309,11 +366,9 @@ struct Parser {
     }
 
     mutating private func match(types: TokenType...) -> Bool {
-        for tokentype in types {
-            if check(type: tokentype) {
-                _ = advance()
-                return true
-            }
+        for tokentype in types where check(type: tokentype) {
+            _ = advance()
+            return true
         }
 
         return false
