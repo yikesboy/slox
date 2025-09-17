@@ -1,4 +1,4 @@
-struct Token {
+struct Token: Equatable {
     let type: TokenType
     let lexeme: String
     let literal: Object?
