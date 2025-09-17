@@ -175,7 +175,7 @@ private func generateStruct(name: String, from definition: StructDefinition) -> 
                 "\tfunc accept<T, E: Error>(_ visitor: any ExprVisitor<T, E>, _ env: inout Environment) throws(E) -> T {\n"
         } else if conformsTo.contains("Stmt") {
             result +=
-                "\tfunc accept<E: Error>(_ visitor: any StmtVisitor<E>, _ env: inout Environment) throws(E) {\n"
+                "\tfunc accept<E: Error>(_ visitor: any StmtVisitor<E>, _ env: inout Environment) throws(E) -> ControlFlow {\n"
         }
     }
     result += "\t\ttry visitor.visit(self, &env)\n"
