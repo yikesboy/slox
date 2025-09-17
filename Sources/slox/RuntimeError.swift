@@ -1,7 +1,9 @@
-enum RuntimeError: ReportableError {
+enum RuntimeError: ReportableError, @unchecked Sendable {
     case binaryTypeError(operator: String, lhs: Object, rhs: Object, token: Token)
     case unaryTypeError(operator: String, operand: Object, token: Token)
     case undefinedVariable(Token)
+    case callError(Token)
+    case expectedArguments(token: Token, expected: Int, got: Int)
 
     var errorType: String {
         String(describing: Self.self)
@@ -11,7 +13,9 @@ enum RuntimeError: ReportableError {
         switch self {
         case .binaryTypeError(operator: _, lhs: _, rhs: _, let token),
             .unaryTypeError(operator: _, operand: _, let token),
-            .undefinedVariable(let token):
+            .undefinedVariable(let token),
+            .callError(let token),
+            .expectedArguments(let token, _, _):
             return token.line
         }
     }
@@ -24,6 +28,10 @@ enum RuntimeError: ReportableError {
             return "Cannot apply '\(op)' to \(operand.typeName)"
         case .undefinedVariable(let token):
             return "Undefined variable '\(token.lexeme)'"
+        case .callError:
+            return "Can only call functions and classes."
+        case .expectedArguments(token: _, let expected, let got):
+            return "Expected \(expected) arguments but got \(got)."
         }
     }
 }
