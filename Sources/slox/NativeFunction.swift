@@ -1,9 +1,9 @@
 struct NativeFunction: CallableProtocol, Equatable {
     let name: String
     let arity: Int
-    let implementation: (Interpreter, [Object]) throws(RuntimeError) -> Object?
+    let implementation: (Interpreter, [Object]) throws(RuntimeError) -> Object
 
-    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object? {
+    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object {
         try implementation(interpreter, arguments)
     }
 

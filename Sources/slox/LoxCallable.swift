@@ -1,6 +1,6 @@
 protocol CallableProtocol {
     var arity: Int { get }
-    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object?
+    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object
 }
 
 enum SloxCallable: Equatable {
@@ -14,7 +14,7 @@ enum SloxCallable: Equatable {
         }
     }
 
-    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object? {
+    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object {
         switch self {
         case .native(let fn): return try fn.call(interpreter: interpreter, arguments: arguments)
         case .userDefined(let fn):

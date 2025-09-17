@@ -5,7 +5,7 @@ struct SloxFunction: CallableProtocol, Equatable {
         return declaration.params.count
     }
 
-    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object? {
+    func call(interpreter: Interpreter, arguments: [Object]) throws(RuntimeError) -> Object {
         var environment: Environment = Environment(enclosing: interpreter.globals)
 
         for (parameter, argument) in zip(declaration.params, arguments) {
