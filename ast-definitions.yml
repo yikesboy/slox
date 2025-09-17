@@ -114,6 +114,11 @@ protocols:
           - name: function
             type: Function
         throwing: ErrorType
+      - name: visit
+        params:
+          - name: _return
+            type: Return
+        throwing: ErrorType
 structs:
   Binary:
     conforms_to: [Expr]
@@ -218,3 +223,10 @@ structs:
         type: "[Token]"
       - name: body
         type: "[Stmt]"
+  Return:
+    conforms_to: [Stmt]
+    fields:
+      - name: keyword
+        type: Token
+      - name: value
+        type: Expr
