@@ -93,7 +93,20 @@ struct Parser {
             return Block(statements: try block())
         }
 
+        if match(types: .RETURN) {
+            return try returnStatement()
+        }
+
         return try expressionStatement()
+    }
+
+    mutating private func returnStatement() throws(ParserError) -> Stmt {
+        let keyword: Token = previous()
+        var value = check(type: .SEMICOLON) ? nil : try expression()
+
+        _ = try consume(.SEMICOLON)
+
+        return Return(keyword: keyword, value: value)
     }
 
     mutating private func forStatement() throws(ParserError) -> Stmt {
