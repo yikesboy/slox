@@ -1,13 +1,22 @@
+import Foundation
+
 struct Interpreter: ExprVisitor, StmtVisitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
-    private var globalEnvironment = Environment()
+    var globals: Environment
+    private var environment: Environment
+
+    init() {
+        globals = Environment()
+        environment = globals
+        defineNativeFunctions()
+    }
 
     mutating func interpret(statements: [Stmt]) throws(SloxError) {
         do throws(ErrorType) {
             for stmt in statements {
-                try stmt.accept(self, &globalEnvironment)
+                try stmt.accept(self, &environment)
             }
         } catch {
             throw .runtime(error)
@@ -199,9 +208,48 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         }
     }
 
+    func visit(_ call: Call, _ env: inout Environment) throws(RuntimeError) -> Object {
+        let callee: Object = try call.callee.accept(self, &env)
+
+        let arguments = try call.arguments.map { arg throws(ErrorType) -> Object in
+            try arg.accept(self, &env)
+        }
+
+        guard case .Callable(let function) = callee else {
+            throw .callError(call.paren)
+        }
+
+        guard arguments.count == function.arity else {
+            throw .expectedArguments(
+                token: call.paren, expected: function.arity, got: arguments.count
+            )
+        }
+
+        return try function.call(interpreter: self, arguments: arguments)
+    }
+
+    func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) {
+        let function: SloxFunction = SloxFunction(declaration: function)
+        env.define(
+            name: function.declaration.name.lexeme, value: .Callable(.userDefined(function))
+        )
+    }
+
     func executeBlock(statements: [Stmt], env: inout Environment) throws(RuntimeError) {
         for stmt in statements {
             try stmt.accept(self, &env)
         }
+    }
+
+    private func defineNativeFunctions() {
+        let clock = NativeFunction(
+            name: "clock",
+            arity: 0,
+            implementation: { _, _ in
+                .Number(Date().timeIntervalSince1970)
+            }
+        )
+
+        globals.define(name: "clock", value: .Callable(.native(clock)))
     }
 }
