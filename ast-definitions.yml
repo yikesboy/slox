@@ -229,4 +229,4 @@ structs:
       - name: keyword
         type: Token
       - name: value
-        type: Expr
+        type: Expr?
