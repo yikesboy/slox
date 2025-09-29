@@ -1,5 +1,5 @@
-struct Stack<T> {
-    private var elements: [T] = []
+struct Stack<Key: Equatable & Hashable, Value> {
+    private var elements: [[Key: Value]] = []
 
     var isEmpty: Bool {
         return elements.isEmpty
@@ -9,24 +9,30 @@ struct Stack<T> {
         return elements.count
     }
 
-    var topToBottom: ReversedCollection<[T]> {
+    var topToBottom: ReversedCollection<[[Key: Value]]> {
         return elements.reversed()
     }
 
-    mutating func push(_ item: T) {
+    mutating func push(_ item: [Key: Value]) {
         elements.append(item)
     }
 
-    mutating func pop() -> T? {
+    mutating func pop() -> [Key: Value]? {
         return elements.popLast()
     }
 
-    mutating func withTopElement<R>(_ body: (inout T) -> R) -> R? {
+    mutating func withTopElement<R>(_ body: (inout [Key: Value]) -> R) -> R? {
         guard !elements.isEmpty else { return nil }
         return body(&elements[elements.count - 1])
     }
 
-    func peek() -> T? {
+    func peek() -> [Key: Value]? {
         return elements.last
+    }
+
+    func containsKey(key: Key) -> Bool {
+        return elements.contains { dict in
+            dict.keys.contains(key)
+        }
     }
 }
