@@ -15,12 +15,12 @@ struct Slox {
     }
 
     private static func runPrompt() {
-        var interpreter = Interpreter()
+        let interpreter = Interpreter()
         while true {
             print("> ")
             guard let line = readLine() else { break }
             do {
-                try run(interpreter: &interpreter, source: line)
+                try run(interpreter: interpreter, source: line)
             } catch {
                 Slox.error(error: error)
             }
@@ -35,8 +35,8 @@ struct Slox {
                 print("Error: Unable to decode file \(script) as utf8")
                 exit(65)
             }
-            var interpreter = Interpreter()
-            try run(interpreter: &interpreter, source: content)
+            let interpreter = Interpreter()
+            try run(interpreter: interpreter, source: content)
         } catch let error as ReportableError {
             Slox.error(error: error)
             exit(65)
@@ -46,11 +46,13 @@ struct Slox {
         }
     }
 
-    private static func run(interpreter: inout Interpreter, source: String) throws(SloxError) {
+    private static func run(interpreter: Interpreter, source: String) throws(SloxError) {
         var scanner = SloxScanner(source: source)
         let tokens = try scanner.scanTokens()
         var parser = Parser(tokens: tokens)
         let statements = parser.parse()  // NOTE: has to throw evenutally
+        let resolver = Resolver(interpreter: interpreter)
+        try resolver.resolveParsedStatements(statements)
         try interpreter.interpret(statements: statements)
     }
 
