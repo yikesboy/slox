@@ -1,11 +1,12 @@
 import Foundation
 
-struct Interpreter: ExprVisitor, StmtVisitor {
+class Interpreter: ExprVisitor, StmtVisitor {
     typealias ReturnType = Object
     typealias ErrorType = RuntimeError
 
     var globals: Environment
     private var environment: Environment
+    private var locals = [UUID: Int]()
 
     init() {
         globals = Environment()
@@ -13,7 +14,11 @@ struct Interpreter: ExprVisitor, StmtVisitor {
         defineNativeFunctions()
     }
 
-    mutating func interpret(statements: [Stmt]) throws(SloxError) {
+    func resolve(expr: Expr, depth: Int) {
+        locals[expr.id] = depth
+    }
+
+    func interpret(statements: [Stmt]) throws(SloxError) {
         do throws(ErrorType) {
             for stmt in statements {
                 let result = try stmt.accept(self, &environment)
@@ -173,16 +178,29 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     }
 
     func visit(_ variable: Variable, _ env: inout Environment) throws(ErrorType) -> ReturnType {
-        guard let value: Object = env.get(name: variable.name) else {
-            throw .undefinedVariable(variable.name)
+        let result = lookupVariable(name: variable.name, expr: variable, env: env) ?? .Nil
+        return result
+    }
+
+    private func lookupVariable(name: Token, expr: any Expr, env: Environment) -> Object? {
+        if let distance = locals[expr.id] {
+            let result = env.getAt(distance: distance, name: name)
+            return result
         }
 
-        return value
+        let result = globals.get(name: name)
+        return result
     }
 
     func visit(_ assign: Assign, _ env: inout Environment) throws(RuntimeError) -> ReturnType {
         let value: Object = try assign.value.accept(self, &env)
-        try env.assign(name: assign.name, value: value)
+
+        if let distance = locals[assign.id] {
+            env.assignAt(distance: distance, name: assign.name, value: value)
+        } else {
+            try globals.assign(name: assign.name, value: value)
+        }
+
         return value
     }
 
@@ -249,14 +267,10 @@ struct Interpreter: ExprVisitor, StmtVisitor {
     }
 
     func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
-        let function: SloxFunction = SloxFunction(declaration: function, closure: env)
-        env.define(
-            name: function.declaration.name.lexeme, value: .Callable(.userDefined(function))
-        )
-
+        let sloxFunction: SloxFunction = SloxFunction(declaration: function, closure: env)
+        env.define(name: function.name.lexeme, value: .Callable(.userDefined(sloxFunction)))
         return .Normal
     }
-
     func visit(_ _return: Return, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         let value: Object
 
