@@ -1,21 +1,47 @@
 ---
 protocols:
-  Expr:
+  "Expr":
+    computed_properties:
+      - name: id
+        type: UUID
+        access: r
     functions:
       - name: accept
         generic_params: [T, "E: Error"]
         params:
           - name: visitor
             type: "any ExprVisitor<T, E>"
+          - name: env
+            type: "inout Environment"
         throwing: E
         returns: T
-  Stmt:
+      - name: accept
+        generic_params: [T, "E: Error"]
+        params:
+          - name: visitor
+            type: "inout any ResolverExprVisitor<T, E>"
+        throwing: E
+        returns: T
+  "Stmt":
+    computed_properties:
+      - name: id
+        type: UUID
+        access: r
     functions:
       - name: accept
         generic_params: ["E: Error"]
         params:
           - name: visitor
             type: "any StmtVisitor<E>"
+          - name: env
+            type: "inout Environment"
+        throwing: E
+        returns: ControlFlow
+      - name: accept
+        generic_params: ["E: Error"]
+        params:
+          - name: visitor
+            type: "inout any ResolverStmtVisitor<E>"
         throwing: E
         returns: ControlFlow
   ExprVisitor:
@@ -25,12 +51,86 @@ protocols:
       - name: ErrorType
         constraints: [Error]
     functions:
+        # Environment-based versions (for Interpreter)
+      - name: visit
+        params:
+          - name: literal
+            type: Literal
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: grouping
+            type: Grouping
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: binary
+            type: Binary
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: unary
+            type: Unary
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: variable
+            type: Variable
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: assign
+            type: Assign
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: logical
+            type: Logical
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: call
+            type: Call
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+  ResolverExprVisitor:
+    generic_params: [ReturnType, ErrorType]
+    associated_types:
+      - name: ReturnType
+      - name: ErrorType
+        constraints: [Error]
+    functions:
+        # Non-environment versions (for Resolver)
       - name: visit
         params:
           - name: literal
             type: Literal
         throwing: ErrorType
         returns: ReturnType
+        
       - name: visit
         params:
           - name: grouping
@@ -79,6 +179,77 @@ protocols:
       - name: ErrorType
         constraints: [Error]
     functions:
+      - name: visit
+        params:
+          - name: expression
+            type: Expression
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: print
+            type: Print
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: _var
+            type: Var
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: block
+            type: Block
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: _if
+            type: _If
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: _while
+            type: _While
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: function
+            type: Function
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: _return
+            type: Return
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
+  ResolverStmtVisitor:
+    generic_params: [ErrorType]
+    associated_types:
+      - name: ErrorType
+        constraints: [Error]
+    functions:
+      # without env
       - name: visit
         params:
           - name: expression

@@ -11,16 +11,36 @@ private struct GenerationDefinition: Codable {
     let structs: [String: StructDefinition]
 }
 
+enum ComputedPropertyAccess: String, Codable {
+    case read = "r"
+    case readwrite = "rw"
+
+    var codeValue: String {
+        switch self {
+        case .read: return "get"
+        case .readwrite: return "get set"
+        }
+    }
+}
+
 private struct ProtocolDefinition: Codable {
+    let computedProperties: [ComputedPropertyDefintion]?
     let genericParams: [String]?
     let associatedTypes: [AssociatedTypeDefinition]?
     let functions: [FunctionDefinition]?
 
     enum CodingKeys: String, CodingKey {
+        case computedProperties = "computed_properties"
         case genericParams = "generic_params"
         case associatedTypes = "associated_types"
         case functions
     }
+}
+
+private struct ComputedPropertyDefintion: Codable {
+    let name: String
+    let type: String
+    let access: ComputedPropertyAccess
 }
 
 private struct FunctionDefinition: Codable {
@@ -96,6 +116,8 @@ do {
 private func generateAST(from defintion: GenerationDefinition, outputFilePath: String) -> String {
     var ast = generateComment(path: inputFilePath)
 
+    ast += "\nimport Foundation\n\n"
+
     for (name, p) in defintion.protocols {
         ast += generateProtocol(name: name, from: p)
     }
@@ -126,15 +148,22 @@ private func generateProtocol(name: String, from definition: ProtocolDefinition)
         }
     }
 
+    if let computedProperties = definition.computedProperties {
+        for property in computedProperties {
+            result += "\tvar \(property.name): \(property.type) { \(property.access.codeValue) }\n"
+        }
+    }
+
     if let functions = definition.functions {
         for function in functions {
-            result += "\tfunc \(function.name)"
+            result +=
+                "\tfunc \(function.name)"
             if let genericParams = function.genericParams {
                 result += "<\(genericParams.joined(separator: ", "))>"
             }
             result += "("
             if let params = function.params {
-                result += params.map { "_ \($0.name): \($0.type), _ env: inout Environment" }
+                result += params.map { "_ \($0.name): \($0.type)" }
                     .joined(
                         separator: ", ")
             }
@@ -163,6 +192,8 @@ private func generateStruct(name: String, from definition: StructDefinition) -> 
 
     result += " {\n"
 
+    result += "\tlet id = UUID()\n"
+
     if let fields = definition.fields {
         result += fields.map { "\tlet \($0.name): \($0.type)\n" }.joined()
         result += "\n"
@@ -173,14 +204,23 @@ private func generateStruct(name: String, from definition: StructDefinition) -> 
         if conformsTo.contains("Expr") {
             result +=
                 "\tfunc accept<T, E: Error>(_ visitor: any ExprVisitor<T, E>, _ env: inout Environment) throws(E) -> T {\n"
+            result += "\t\ttry visitor.visit(self, &env)\n"
+            result += "\t}\n"
+            result +=
+                "\tfunc accept<T, E: Error>(_ visitor: inout any ResolverExprVisitor<T, E>) throws(E) -> T {\n"
+            result += "\t\ttry visitor.visit(self)\n"
+            result += "\t}\n"
         } else if conformsTo.contains("Stmt") {
             result +=
                 "\tfunc accept<E: Error>(_ visitor: any StmtVisitor<E>, _ env: inout Environment) throws(E) -> ControlFlow {\n"
+            result += "\t\ttry visitor.visit(self, &env)\n"
+            result += "\t}\n"
+            result +=
+                "\tfunc accept<E: Error>(_ visitor: inout any ResolverStmtVisitor<E>) throws(E) -> ControlFlow {\n"
+            result += "\t\ttry visitor.visit(self)\n"
+            result += "\t}\n"
         }
     }
-    result += "\t\ttry visitor.visit(self, &env)\n"
-    result += "\t}\n"
-
     result += "}\n\n"
 
     return result
