@@ -86,6 +86,12 @@ class Resolver: ResolverExprVisitor, ResolverStmtVisitor {
         return .Normal
     }
 
+    func visit(_ _class: Class) throws(ResolverError) -> ControlFlow {
+        try declare(name: _class.name)
+        define(name: _class.name)
+        return .Normal
+    }
+
     func visit(_ _return: Return) throws(ResolverError)
         -> ControlFlow
     {
