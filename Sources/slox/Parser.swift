@@ -243,12 +243,14 @@ struct Parser {
             let equals: Token = previous()
             let value: Expr = try assignment()
 
-            guard let variable = expr as? Variable else {
-                throw .invalidAssignmentTarget(equals)
+            if let variable = expr as? Variable {
+                let name: Token = variable.name
+                return Assign(name: name, value: value)
+            } else if let get = expr as? Get {
+                return Set(object: get.object, name: get.name, value: value)
             }
 
-            let name: Token = variable.name
-            return Assign(name: name, value: value)
+            throw .invalidAssignmentTarget(equals)
         }
 
         return expr
@@ -341,6 +343,9 @@ struct Parser {
         while true {
             if match(types: .LEFT_PAREN) {
                 expression = try finishCall(callee: expression)
+            } else if match(types: .DOT) {
+                let name = try consume(.IDENTIFIER)
+                expression = Get(object: expression, name: name)
             } else {
                 break
             }
