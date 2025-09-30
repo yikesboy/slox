@@ -116,6 +116,22 @@ protocols:
             type: "inout Environment"
         throwing: ErrorType
         returns: ReturnType
+      - name: visit
+        params:
+          - name: get
+            type: Get
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: set
+            type: Set
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ReturnType
   ResolverExprVisitor:
     generic_params: [ReturnType, ErrorType]
     associated_types:
@@ -171,6 +187,18 @@ protocols:
         params:
           - name: call
             type: Call
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: get
+            type: Get
+        throwing: ErrorType
+        returns: ReturnType
+      - name: visit
+        params:
+          - name: set
+            type: Set
         throwing: ErrorType
         returns: ReturnType
   StmtVisitor:
@@ -369,6 +397,22 @@ structs:
         type: Token
       - name: arguments
         type: "[Expr]"
+  Get:
+    conforms_to: [Expr]
+    fields:
+      - name: object
+        type: Expr
+      - name: name
+        type: Token
+  Set:
+    conforms_to: [Expr]
+    fields:
+      - name: object
+        type: Expr
+      - name: name
+        type: Token
+      - name: value
+        type: Expr
   Expression:
     conforms_to: [Stmt]
     fields:
