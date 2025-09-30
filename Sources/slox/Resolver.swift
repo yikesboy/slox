@@ -92,6 +92,15 @@ class Resolver: ResolverExprVisitor, ResolverStmtVisitor {
         return .Normal
     }
 
+    func visit(_ get: Get) throws(ResolverError) {
+        try resolve(expr: get.object)
+    }
+
+    func visit(_ set: Set) throws(ResolverError) {
+        try resolve(expr: set.value)
+        try resolve(expr: set.object)
+    }
+
     func visit(_ _return: Return) throws(ResolverError)
         -> ControlFlow
     {
