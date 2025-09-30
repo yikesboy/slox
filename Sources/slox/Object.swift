@@ -4,6 +4,7 @@ indirect enum Object: Equatable {
     case Boolean(Bool)
     case Nil
     case Callable(SloxCallable)
+    case Instance(SloxInstance)
 
     var typeName: Swift.String {
         let fullDescription = Swift.String(describing: self)
@@ -17,6 +18,7 @@ indirect enum Object: Equatable {
         case .Boolean(let value): return Swift.String(value)
         case .Nil: return "nil"
         case .Callable(let value): return Swift.String(describing: value)
+        case .Instance(let value): return Swift.String(describing: value)
         }
     }
 
