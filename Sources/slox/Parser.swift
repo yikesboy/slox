@@ -46,6 +46,9 @@ struct Parser {
 
     mutating private func declaration() throws(ParserError) -> Stmt {
         do {
+            if match(types: .CLASS) {
+                return try classDeclaration()
+            }
             if match(types: .FUN) {
                 return try function(.function)
             }
@@ -57,6 +60,20 @@ struct Parser {
             synchronize()
             throw error
         }
+    }
+
+    mutating private func classDeclaration() throws(ParserError) -> Stmt {
+        let name: Token = try consume(.IDENTIFIER)
+        _ = try consume(.LEFT_BRACE)
+
+        var methods = [Function]()
+        while !check(type: .RIGHT_BRACE) && !isAtEnd {
+            methods.append(try function(.method))
+        }
+
+        _ = try consume(.RIGHT_BRACE)
+
+        return Class(name: name, methods: methods)
     }
 
     mutating private func varDeclaration() throws(ParserError) -> Stmt {
