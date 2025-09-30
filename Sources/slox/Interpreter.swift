@@ -273,6 +273,33 @@ class Interpreter: ExprVisitor, StmtVisitor {
         return try function.call(interpreter: self, arguments: arguments)
     }
 
+    func visit(_ get: Get, _ env: inout Environment) throws(RuntimeError) -> Object {
+        let object = try get.object.accept(self, &env)
+
+        guard case .Instance(var instance) = object else {
+            throw .onlyInstancesHaveProperties(get.name)
+        }
+
+        guard let value = instance.get(name: get.name) else {
+            throw .undefinedProperty(get.name)
+        }
+
+        return value
+    }
+
+    func visit(_ set: Set, _ env: inout Environment) throws(RuntimeError) -> Object {
+        let object = try set.object.accept(self, &env)
+
+        guard case .Instance(var instance) = object else {
+            throw .onlyInstancesHaveFields(set.name)
+        }
+
+        let value = try set.value.accept(self, &env)
+        instance.set(name: set.name, value: value)
+
+        return value
+    }
+
     func visit(_ function: Function, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         let sloxFunction: SloxFunction = SloxFunction(declaration: function, closure: env)
         env.define(name: function.name.lexeme, value: .Callable(.userDefined(sloxFunction)))

@@ -4,6 +4,9 @@ enum RuntimeError: ReportableError, @unchecked Sendable {
     case undefinedVariable(Token)
     case callError(Token)
     case expectedArguments(token: Token, expected: Int, got: Int)
+    case onlyInstancesHaveProperties(Token)
+    case undefinedProperty(Token)
+    case onlyInstancesHaveFields(Token)
 
     var errorType: String {
         String(describing: Self.self)
@@ -15,7 +18,10 @@ enum RuntimeError: ReportableError, @unchecked Sendable {
             .unaryTypeError(operator: _, operand: _, let token),
             .undefinedVariable(let token),
             .callError(let token),
-            .expectedArguments(let token, _, _):
+            .expectedArguments(let token, _, _),
+            .onlyInstancesHaveProperties(let token),
+            .undefinedProperty(let token),
+            .onlyInstancesHaveFields(let token):
             return token.line
         }
     }
@@ -32,6 +38,12 @@ enum RuntimeError: ReportableError, @unchecked Sendable {
             return "Can only call functions and classes."
         case .expectedArguments(token: _, let expected, let got):
             return "Expected \(expected) arguments but got \(got)."
+        case .onlyInstancesHaveProperties(let token):
+            return "Only instances have properties."
+        case .undefinedProperty(let token):
+            return "Undefined property '\(token.lexeme)'."
+        case .onlyInstancesHaveFields(let token):
+            return "Only instances have fields."
         }
     }
 }
