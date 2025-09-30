@@ -177,6 +177,13 @@ class Interpreter: ExprVisitor, StmtVisitor {
         return .Normal
     }
 
+    func visit(_ _class: Class, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
+        env.define(name: _class.name.lexeme, value: .Nil)
+        let sloxClass = SloxClass(name: _class.name.lexeme)
+        try env.assign(name: _class.name, value: .Callable(._class(sloxClass)))
+        return .Normal
+    }
+
     func visit(_ variable: Variable, _ env: inout Environment) throws(ErrorType) -> ReturnType {
         let result = lookupVariable(name: variable.name, expr: variable, env: env) ?? .Nil
         return result
