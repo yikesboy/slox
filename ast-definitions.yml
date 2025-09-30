@@ -243,6 +243,14 @@ protocols:
             type: "inout Environment"
         throwing: ErrorType
         returns: ControlFlow
+      - name: visit
+        params:
+          - name: _class
+            type: Class
+          - name: env
+            type: "inout Environment"
+        throwing: ErrorType
+        returns: ControlFlow
   ResolverStmtVisitor:
     generic_params: [ErrorType]
     associated_types:
@@ -296,6 +304,12 @@ protocols:
         params:
           - name: _return
             type: Return
+        throwing: ErrorType
+        returns: ControlFlow
+      - name: visit
+        params:
+          - name: _class
+            type: Class
         throwing: ErrorType
         returns: ControlFlow
 structs:
@@ -409,3 +423,10 @@ structs:
         type: Token
       - name: value
         type: Expr?
+  Class:
+    conforms_to: [Stmt]
+    fields:
+      - name: name
+        type: Token
+      - name: methods
+        type: "[Function]"
