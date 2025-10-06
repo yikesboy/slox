@@ -38,11 +38,11 @@ enum RuntimeError: ReportableError, @unchecked Sendable {
             return "Can only call functions and classes."
         case .expectedArguments(token: _, let expected, let got):
             return "Expected \(expected) arguments but got \(got)."
-        case .onlyInstancesHaveProperties(let token):
+        case .onlyInstancesHaveProperties:
             return "Only instances have properties."
         case .undefinedProperty(let token):
             return "Undefined property '\(token.lexeme)'."
-        case .onlyInstancesHaveFields(let token):
+        case .onlyInstancesHaveFields:
             return "Only instances have fields."
         }
     }
