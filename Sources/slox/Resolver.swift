@@ -89,6 +89,11 @@ class Resolver: ResolverExprVisitor, ResolverStmtVisitor {
     func visit(_ _class: Class) throws(ResolverError) -> ControlFlow {
         try declare(name: _class.name)
         define(name: _class.name)
+
+        for method in _class.methods {
+            try resolveFunction(function: method, functionType: .METHOD)
+        }
+
         return .Normal
     }
 

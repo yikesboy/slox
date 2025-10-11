@@ -1,5 +1,6 @@
 struct SloxClass: CallableProtocol, Equatable {
     let name: String
+    let methods: [String: SloxFunction]
 
     var arity: Int {
         return 0
@@ -10,4 +11,7 @@ struct SloxClass: CallableProtocol, Equatable {
         return .Instance(sloxInstance)
     }
 
+    func findMethod(name: String) -> SloxFunction? {
+        return methods[name]
+    }
 }

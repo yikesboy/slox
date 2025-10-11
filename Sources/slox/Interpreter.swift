@@ -179,7 +179,12 @@ class Interpreter: ExprVisitor, StmtVisitor {
 
     func visit(_ _class: Class, _ env: inout Environment) throws(RuntimeError) -> ControlFlow {
         env.define(name: _class.name.lexeme, value: .Nil)
-        let sloxClass = SloxClass(name: _class.name.lexeme)
+
+        let methods = _class.methods.reduce(into: [String: SloxFunction]()) { dict, method in
+            dict[method.name.lexeme] = SloxFunction(declaration: method, closure: env)
+        }
+
+        let sloxClass = SloxClass(name: _class.name.lexeme, methods: methods)
         try env.assign(name: _class.name, value: .Callable(._class(sloxClass)))
         return .Normal
     }

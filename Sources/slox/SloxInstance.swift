@@ -7,7 +7,15 @@ class SloxInstance: Equatable {
     }
 
     func get(name: Token) -> Object? {
-        return fields[name.lexeme]
+        if let property = fields[name.lexeme] {
+            return property
+        }
+
+        if let method = _class.findMethod(name: name.lexeme) {
+            return .Callable(.userDefined(method))
+        }
+
+        return nil
     }
 
     func set(name: Token, value: Object) {
